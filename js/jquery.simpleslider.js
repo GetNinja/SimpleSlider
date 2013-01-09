@@ -1,12 +1,12 @@
  /**
  * jQuery SimpleSlider Plugin
- * This jQuery plugin was created by Luke Scalf at MonkeyWrench (https://github.com/GetNinja/SimpleSlider)
- * @name jQuery SimpleSlider
- * @author 601am - http://www.monkeywrench.cc/
- * @version 0.1
- * @date February 5, 2012
+ * This jQuery plugin was created by Luke Scalf at MonkeyWrench (https://github.com/monkey-wrench/SimpleSlider)
+ * @name jquery.simpleslider.js
+ * @author Luke Scalf - http://www.monkeywrench.cc/
+ * @version 0.2
+ * @date January 8, 2012
  * @category jQuery plugin
- * @copyright (c) 2012 MonkeyWrench (monkeywrench.cc)
+ * @copyright (c) 2012-2013 MonkeyWrench (monkeywrench.cc)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,8 +45,12 @@
 			$('.images > *', slider).css({display: 'none'});
 			$('.images .' + options.slide_class + current_image, slider).css({display: 'inline'});
 			
+			// Generate navigation, if enabled
+			if(options.navigation == true)
+				generate_navigation();
+			
 			// Initialize Slideshow
-			setTimeout(play, options.play);
+			time_out = setTimeout(play, options.delay);
 			
 			/**
 			 * SimpleSlider Function (play): Starts the slider
@@ -54,7 +58,7 @@
 			function play()
 			{
 				next_image = current_image;
-				
+
 				if(next_image == image_count)
 				{
 					next_image = 0;
@@ -63,7 +67,7 @@
 				
 				goto_image(next_image);
 				
-				time_out = setTimeout(play, options.play);
+				time_out = setTimeout(play, options.delay);
 			}
 			
 			/**
@@ -75,11 +79,38 @@
 			}
 			
 			/**
+			 * SimpleSlider Function (generate_navigation): Generates Slide Navigation
+			 */
+			function generate_navigation()
+			{
+				var navigation = '';
+				for(i = 1; i <= image_count; i++)
+				{
+					navigation += '<li id="image' + i + '"><a href="#">&nbsp;</a></li>';
+				}
+				$('.' + options.nav_container).html(navigation);
+				$('#' + options.slide_class + current_image).addClass('active');
+			}
+			
+			/**
+			 * SimpleSlider Function (update_navigation): Updates Slide Navigation
+			 */
+			function update_navigation(new_image)
+			{
+				$('.' + options.nav_container + ' li').removeClass('active');
+				$('#' + options.slide_class + new_image).addClass('active');
+			}
+			
+			/**
 			 * SimpleSlider Function (goto_image): Animation handler
 			 */
 			function goto_image(image_id)
 			{
 				if(!image_id) return true;
+				
+				// Update navigation, if enabled
+				if(options.navigation == true)
+					update_navigation(image_id);
 				
 				switch(options.effect)
 				{
@@ -121,6 +152,18 @@
 			}
 			
 			/**
+			 * SimpleSlider Function (goto_image_restart): Goes to specified image, and restarts animation
+			 */
+			function goto_image_restart(image_id)
+			{
+				if(!image_id) return true;
+				
+				pause();
+				goto_image(image_id);
+				time_out = setTimeout(play, options.delay);
+			}
+			
+			/**
 			 * Event Handlers: Handles pausing on slider hover, if enabled
 			 */
 			if(options.pause == true)
@@ -129,9 +172,23 @@
 				{
 					pause();
 				});
-				$('.images', slider).mouseleave( function(e)
+				$('.images', slider).mouseleave(function(e)
 				{
 					play();
+				});
+			}
+			
+			/**
+			 * Event Handlers: Handles click of slider navigation, if enabled
+			 */
+			if(options.navigation == true)
+			{
+				$('.' + options.nav_container + ' li a').click(function(e)
+				{
+					e.preventDefault();
+					
+					var new_image = $(this).parent().attr('id').replace('image', '');
+					goto_image_restart(new_image);
 				});
 			}
 		});
@@ -142,12 +199,14 @@
 	 * SimpleSlider: Default Options
 	 */
 	$.fn.simpleSlider.defaults = {
-		container: 'simple-slider',    // String, Class name for gallery container. Default is 'simple-slider'
-		delay: 0,                      // Number, Determines time in milliseconds between slide transitions, Default 0
-		effect: 'fade-in',             // String, Type of effect to use, Options are 'fade-in', 'fade-out', 'cross-fade', 'no-effect'
-		pause: true,                   // Boolean, Determines whether or not to pause the slider on mouse over, Default true
-		slide_class: 'image',          // String, Class name for slides, do not include the slide number here. Default 'image'
-		start: 1,                      // Number, Determines which slide to start with, Default 1
-		transition: 500,               // Number, Determines time in milliseconds the slide transitions will take, Default 500
+		container: 'simple-slider',               // String, Class name for gallery container. Default is 'simple-slider'
+		delay: 0,                                 // Number, Determines time in milliseconds between slide transitions, Default 0
+		effect: 'fade-out',                       // String, Type of effect to use, Options are 'fade-in', 'fade-out', 'cross-fade', 'no-effect'
+		navigation: false,                        // Boolean, Determines whether or not to have slide navigation circles, default false
+		nav_container: 'slider-navigation',       // String, Class name for navigation container, default 'slider-navigation'
+		pause: true,                              // Boolean, Determines whether or not to pause the slider on mouse over, Default true
+		slide_class: 'image',                     // String, Class name for slides, do not include the slide number here. Default 'image'
+		start: 1,                                 // Number, Determines which slide to start with, Default 1
+		transition: 500,                          // Number, Determines time in milliseconds the slide transitions will take, Default 500
 	};
 })(jQuery);
